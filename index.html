@@ -9,7 +9,25 @@
     <link rel="stylesheet" type="text/css" href="css/main.css">
   </head>
   <body>
-    
+    <div class="wrapper">
+      <header>
+        <span class="title">GENERATOR SETTINGS</span>
+        <span>
+          <input type="text" id="widthInput" value="5">
+          <input type="text" id="heightInput" value="5">
+          <button type="button" id="generateButton">►</button>
+        </span>
+        <span>
+          <input type="text" id="scaleInput" value="1">
+          <button id="scaleUpButton">▲</button>
+          <button id="scaleDownButton">▼</button>
+          <button id="scaleResetButton">●</button>
+        </span>
+      </header>
+      <main id="mainObject">
+        <article id="articleObject"></article>
+      </main>
+    </div>
 
     <script src="js/main.js"></script>
   </body>
