@@ -58,6 +58,8 @@ App.OnMovingUp = () => {
 };
 App.OnMovingReset = () => App.SetOffset(0, 0);
 
+App.OnGenerate = () => App.Generate();
+
 /* Methods */
 App.GetElements = () => {
   const tags = [
@@ -77,7 +79,7 @@ App.PrepareElements = () => {
     mainObject,
   } = App.elements;
 
-  generateButton.addEventListener('click', App.Generate);
+  generateButton.addEventListener('click', App.OnGenerate);
 
   scaleInput.addEventListener('change', App.OnScaleChanged, true);
   scaleUpButton.addEventListener('click', App.OnScaleUp);
@@ -91,6 +93,7 @@ App.PrepareElements = () => {
   mainObject.addEventListener('mousemove', App.OnMovingMove, true);
 
   App.SetScale(App.state.scale);
+  App.Generate();
 };
 App.SetScale = (value) => {
   if (!value) value = App.settings.scale;
@@ -132,24 +135,12 @@ App.SetGridElement = (element, options) => {
   element.number.innerText = `${element.index},${element.count}`;
 };
 App.Generate = () => {
-  const { articleObject } = App.elements;
   const { gridElementSize, countX, countY } = App.settings;
-  articleObject.innerHTML = '';
-  articleObject.style.width = `${countX * gridElementSize}px`;
-  articleObject.style.height = `${countY * gridElementSize}px`;
-
-  const grid = new Array(countY);
-  for (let y = 0, index = 0; y < countY; y++) {
-    grid[y] = new Array(countX);
-    for (let x = 0; x < countX; x++, index++) {
-      const element = App.CreateArrowElement();
-      App.elements.articleObject.appendChild(element.span);
-      App.SetGridElement(element, {index});
-      grid[y][x] = element;
-    }
-  }
-
-  App.state.grid = grid;
+  const { articleObject } = App.elements;
+  App.state.grid = App.CreateGrid({
+    gridElementSize, countX, countY,
+    articleObject,
+  });
 };
 
 /* Graphics */
@@ -172,6 +163,25 @@ App.CreateArrowElement = () => {
     count: 0,
   };
 };
+App.CreateGrid = (options) => {
+  const { articleObject, gridElementSize, countX, countY } = options;
+  articleObject.innerHTML = '';
+  articleObject.style.width = `${countX * gridElementSize}px`;
+  articleObject.style.height = `${countY * gridElementSize}px`;
+
+  const grid = new Array(countY);
+  for (let y = 0, index = 0; y < countY; y++) {
+    grid[y] = new Array(countX);
+    for (let x = 0; x < countX; x++, index++) {
+      const element = App.CreateArrowElement();
+      App.elements.articleObject.appendChild(element.span);
+      App.SetGridElement(element, {index});
+      grid[y][x] = element;
+    }
+  }
+
+  return grid;
+};
 
 /* Shortcuts */
 App.Tag = (tag) => document.getElementsByTagName(tag);
@@ -185,8 +195,6 @@ App.Create = (tag) => document.createElement(tag);
 App.Start = () => {
   App.elements = App.GetElements();
   App.PrepareElements();
-
-  App.Generate();
 };
 
 window.onload = App.Start;
