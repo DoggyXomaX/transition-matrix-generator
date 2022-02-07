@@ -99,7 +99,6 @@ App.SetScale = (value) => {
   App.Var('scale', value);
 };
 App.SetOffset = (x, y) => {
-  console.log({x,y});
   x = Number.isNaN(+x) ? App.state.offset.x : x;
   y = Number.isNaN(+y) ? App.state.offset.y : y;
   App.state.offset.x = x;
