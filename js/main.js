@@ -1,27 +1,20 @@
 const App = {
   elements: null,
   state: {
-    width: 5,
-    height: 5,
-    scale: 1,
-    offset: {
-      x: 0,
-      y: 0,
-    },
+    offset: { x: 0, y: 0 },
     mouse: {
       isDown: false,
-      start: {
-        x: 0,
-        y: 0,
-      },
-      current: {
-        x: 0,
-        y: 0,
-      },
+      start: { x: 0, y: 0 },
+      current: { x: 0, y: 0 },
     },
+    grid: [],
   },
   settings: {
+    countX: 5,
+    countY: 5,
+    scale: 1,
     scaleStep: 0.8,
+    gridElementSize: 30,
   },
 };
 
@@ -31,8 +24,8 @@ App.OnScaleChanged = (e) => {
   const reg = /[0-9\.]*/g.exec(e.target.value);
   App.SetScale(reg[0] ? +reg[0] * 0.01 : undefined);
 };
-App.OnScaleUp = () => App.SetScale(App.state.scale / App.settings.scaleStep);
-App.OnScaleDown = () => App.SetScale(App.state.scale * App.settings.scaleStep);
+App.OnScaleUp = () => App.SetScale(App.settings.scale / App.settings.scaleStep);
+App.OnScaleDown = () => App.SetScale(App.settings.scale * App.settings.scaleStep);
 App.OnScaleReset = () => App.SetScale(1);
 
 App.OnMovingDown = (e) => {
@@ -92,8 +85,8 @@ App.PrepareElements = () => {
   App.SetScale(App.state.scale);
 };
 App.SetScale = (value) => {
-  if (!value) value = App.state.scale;
-  App.state.scale = value;
+  if (!value) value = App.settings.scale;
+  App.settings.scale = value;
   App.elements.scaleInput.value = `${(value * 100).toFixed(2)}%`;
   App.Var('scale', value);
 };
@@ -106,82 +99,54 @@ App.SetOffset = (x, y) => {
   App.Var('offset-x', `${x}px`);
   App.Var('offset-y', `${y}px`);
 };
+App.SetGridElement = (element, direction, value) => {
+  direction = Number.isNaN(+direction) ? 0 : +direction;
+  direction = Math.min(Math.max(direction, 0), 3);
+  direction *= 90;
+  App.VarElem(element.arrow, 'r', `${direction}deg`);
+  App.VarElem(element.number, 'r', `${-direction}deg`);
+  element.number.innerText = value;
+};
+App.Generate = () => {
+  const { articleObject } = App.elements;
+  const { gridElementSize, countX, countY } = App.settings;
+  articleObject.innerHTML = '';
+  articleObject.style.width = `${countX * gridElementSize}px`;
+  articleObject.style.height = `${countY * gridElementSize}px`;
+};
 
 /* Graphics */
-App.CreateArrowBox = (count, size, border, padding, useCenter) => {
-  const canvas = App.Create('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  // clear
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  // draw border 10%
-  ctx.strokeStyle = 'black';
-  ctx.lineWidth = (size * border) * 2;
-  ctx.rect(0, 0, canvas.width, canvas.height);
-  ctx.stroke();
-  
-  if (count === 0) return canvas;
+App.CreateArrowElement = (size) => {
+  const span = App.Create('span');
+  span.className = 'arrow';
+  span.style.width = `${size}px`;
+  span.style.height = `${size}px`;
 
-  // draw arrows
-  ctx.fillStyle = 'black';
-  const offset = size * (border + padding);
-  const arrowSize = size - offset * 2;
-  const arrowWidth = arrowSize / count;
-  for (let i = 0; i < count; i++) {
-    const px = offset + arrowWidth * i;
-    const py = size * 0.5;
-    ctx.beginPath();
-      ctx.moveTo(px, py);
-      ctx.lineTo(px + arrowWidth, py - arrowSize * 0.5);
-      if (useCenter) ctx.lineTo(px + arrowWidth * 0.5, py);
-      ctx.lineTo(px + arrowWidth, py + arrowSize * 0.5);
-    ctx.closePath();
-    ctx.fill();
-  }
+  const arrowSpan = App.Create('span');
+  arrowSpan.className = 'arrow__icon';
+  arrowSpan.style.width = `${size - 8}px`;
+  arrowSpan.style.height = `${size - 8}px`;
+  span.appendChild(arrowSpan);
 
-  return canvas;
-};
-App.CreateNumberedArrowBox = (count, size, border, padding) => {
-  const canvas = App.Create('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  // clear
-  ctx.fillStyle = 'white';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  // draw border 10%
-  ctx.strokeStyle = 'black';
-  ctx.lineWidth = (size * border) * 2;
-  ctx.rect(0, 0, canvas.width, canvas.height);
-  ctx.stroke();
-  // draw arrow
-  const offset = size * (border + padding);
-  ctx.fillStyle = 'black';
-  ctx.beginPath();
-    ctx.moveTo(offset, size * 0.5);
-    ctx.lineTo(size - offset, offset);
-    ctx.lineTo(size - offset, size - offset);
-  ctx.closePath();
-  ctx.fill();
-  // draw text
-  ctx.fillStyle = 'white';
-  ctx.font = "bold 24px monospace";
-  const fontMeasure = ctx.measureText(count);
-  const fontSize = {
-    width: fontMeasure.actualBoundingBoxRight + fontMeasure.actualBoundingBoxLeft,
-    height: fontMeasure.actualBoundingBoxAscent + fontMeasure.actualBoundingBoxDescent,
+  const numberSpan = App.Create('span');
+  numberSpan.className = 'arrow__number';
+  numberSpan.innerText = '12';
+  arrowSpan.appendChild(numberSpan);
+
+  return {
+    span: span,
+    arrow: arrowSpan,
+    number: numberSpan,
+    direction: 0,
   };
-  ctx.fillText(count, (size - fontSize.width) * 0.7, (size + fontSize.height) * 0.5);
-
-  return canvas;
 };
 
 /* Shortcuts */
 App.Tag = (tag) => document.getElementsByTagName(tag);
+App.Class = (className) => document.getElementsByClassName(className);
 App.Get = (id) => document.getElementById(id);
 App.Var = (name, value) => document.documentElement.style.setProperty(`--${name}`, value);
+App.VarElem = (element, name, value) => element.style.setProperty(`--${name}`, value);
 App.Create = (tag) => document.createElement(tag);
 
 /* Init */
@@ -190,8 +155,9 @@ App.Start = () => {
   App.PrepareElements();
 
   // test
-  const canvas = App.CreateNumberedArrowBox(24, 100, 0.05, 0.05);
-  App.elements.articleObject.appendChild(canvas);
+  const element = App.CreateArrowElement(30);
+  App.SetGridElement(element, 1, 'Х');
+  App.elements.articleObject.appendChild(element.span);
 };
 
 window.onload = App.Start;

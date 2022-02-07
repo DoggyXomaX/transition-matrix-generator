@@ -2,6 +2,7 @@
   --scale: 1;
   --offset-x: 0px;
   --offset-y: 0px;
+  --grid-element-size: 30px;
 }
 
 * {
@@ -10,17 +11,36 @@
   font-family: sans-serif; font-size: 16px;
 }
 html, body, .wrapper { width: 100%; height: 100%; }
-body { color: #fff; }
+body { color: #FFFFFF; }
+
+.arrow {
+  display: block;
+  position: relative;
+  padding: 2px;
+  border: solid 2px #000000;
+  border-style: inset;
+  background-color: #FFFFFF;
+}
+.arrow__icon {
+  --r: 0deg;
+  background-size: 100%;
+  background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAwIDAgMCA1MGwxMDAgNTBWMFoiIGZpbGw9IiMwMDAiLz48L3N2Zz4=);
+  transform: rotate(var(--r));
+}
+.arrow__number {
+  --r: 0deg;
+  position: absolute;
+  left: 65%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(var(--r));
+  font-size: 10px;
+}
 
 article {
   position: absolute;
   left: calc(50% + var(--offset-x));
   top: calc(50% + var(--offset-y));
   transform: translate(-50%, -50%) scale(var(--scale));
-  min-width: 1em;
-  min-height: 1em;
-  max-width: 100%;
-  max-height: 100%;
   background-color: #000000;
 }
 header { width: 100%; background-color: #AAAAAA; z-index: 100; }
