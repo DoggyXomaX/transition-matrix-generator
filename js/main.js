@@ -134,6 +134,7 @@ App.SetGridElement = (element, options) => {
 
   element.number.innerText = `${element.index},${element.count}`;
 };
+App.SetGridElementXY = (x, y, options) => App.SetGridElement(grid[y][x], options);
 App.Generate = () => {
   const { gridElementSize, countX, countY } = App.settings;
   const { articleObject } = App.elements;
