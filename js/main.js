@@ -107,15 +107,91 @@ App.SetOffset = (x, y) => {
   App.Var('offset-y', `${y}px`);
 };
 
+/* Graphics */
+App.CreateArrowBox = (count, size, border, padding, useCenter) => {
+  const canvas = App.Create('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  // clear
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // draw border 10%
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = (size * border) * 2;
+  ctx.rect(0, 0, canvas.width, canvas.height);
+  ctx.stroke();
+  
+  if (count === 0) return canvas;
+
+  // draw arrows
+  ctx.fillStyle = 'black';
+  const offset = size * (border + padding);
+  const arrowSize = size - offset * 2;
+  const arrowWidth = arrowSize / count;
+  for (let i = 0; i < count; i++) {
+    const px = offset + arrowWidth * i;
+    const py = size * 0.5;
+    ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px + arrowWidth, py - arrowSize * 0.5);
+      if (useCenter) ctx.lineTo(px + arrowWidth * 0.5, py);
+      ctx.lineTo(px + arrowWidth, py + arrowSize * 0.5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  return canvas;
+};
+App.CreateNumberedArrowBox = (count, size, border, padding) => {
+  const canvas = App.Create('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  // clear
+  ctx.fillStyle = 'white';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // draw border 10%
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = (size * border) * 2;
+  ctx.rect(0, 0, canvas.width, canvas.height);
+  ctx.stroke();
+  // draw arrow
+  const offset = size * (border + padding);
+  ctx.fillStyle = 'black';
+  ctx.beginPath();
+    ctx.moveTo(offset, size * 0.5);
+    ctx.lineTo(size - offset, offset);
+    ctx.lineTo(size - offset, size - offset);
+  ctx.closePath();
+  ctx.fill();
+  // draw text
+  ctx.fillStyle = 'white';
+  ctx.font = "bold 24px monospace";
+  const fontMeasure = ctx.measureText(count);
+  const fontSize = {
+    width: fontMeasure.actualBoundingBoxRight + fontMeasure.actualBoundingBoxLeft,
+    height: fontMeasure.actualBoundingBoxAscent + fontMeasure.actualBoundingBoxDescent,
+  };
+  ctx.fillText(count, (size - fontSize.width) * 0.7, (size + fontSize.height) * 0.5);
+
+  return canvas;
+};
+
 /* Shortcuts */
 App.Tag = (tag) => document.getElementsByTagName(tag);
 App.Get = (id) => document.getElementById(id);
 App.Var = (name, value) => document.documentElement.style.setProperty(`--${name}`, value);
+App.Create = (tag) => document.createElement(tag);
 
 /* Init */
 App.Start = () => {
   App.elements = App.GetElements();
   App.PrepareElements();
+
+  // test
+  const canvas = App.CreateNumberedArrowBox(24, 100, 0.05, 0.05);
+  App.elements.articleObject.appendChild(canvas);
 };
 
 window.onload = App.Start;

@@ -12,13 +12,15 @@
 html, body, .wrapper { width: 100%; height: 100%; }
 body { color: #fff; }
 
-article { 
+article {
   position: absolute;
   left: calc(50% + var(--offset-x));
   top: calc(50% + var(--offset-y));
   transform: translate(-50%, -50%) scale(var(--scale));
   min-width: 1em;
   min-height: 1em;
+  max-width: 100%;
+  max-height: 100%;
   background-color: #000000;
 }
 header { width: 100%; background-color: #AAAAAA; z-index: 100; }
@@ -39,6 +41,7 @@ button, input {
 }
 button, input, .title { padding: 0 10px; }
 .title { line-height: 40px; height: 40px; }
+canvas { display: block; }
 
 @media screen and (max-width: 755px) {
   main { height: calc(100% - 120px); }
