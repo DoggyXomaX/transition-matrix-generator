@@ -71,16 +71,24 @@ App.GetElements = () => {
   return elements;
 };
 App.PrepareElements = () => {
-  App.elements.scaleInput.addEventListener('change', App.OnScaleChanged, true);
-  App.elements.scaleUpButton.addEventListener('click', App.OnScaleUp);
-  App.elements.scaleDownButton.addEventListener('click', App.OnScaleDown);
-  App.elements.scaleResetButton.addEventListener('click', App.OnScaleReset);
+  const {
+    generateButton,
+    scaleInput, scaleUpButton, scaleDownButton, scaleResetButton, offsetResetButton,
+    mainObject,
+  } = App.elements;
 
-  App.elements.mainObject.addEventListener('wheel', App.OnScaleWheel, true);
-  App.elements.mainObject.addEventListener('mousedown', App.OnMovingDown, true);
+  generateButton.addEventListener('click', App.Generate);
+
+  scaleInput.addEventListener('change', App.OnScaleChanged, true);
+  scaleUpButton.addEventListener('click', App.OnScaleUp);
+  scaleDownButton.addEventListener('click', App.OnScaleDown);
+  scaleResetButton.addEventListener('click', App.OnScaleReset);
+  offsetResetButton.addEventListener('click', App.OnMovingReset);
+
+  mainObject.addEventListener('wheel', App.OnScaleWheel, true);
+  mainObject.addEventListener('mousedown', App.OnMovingDown, true);
   window.addEventListener('mouseup', App.OnMovingUp, true);
-  App.elements.mainObject.addEventListener('mousemove', App.OnMovingMove, true);
-  App.elements.offsetResetButton.addEventListener('click', App.OnMovingReset);
+  mainObject.addEventListener('mousemove', App.OnMovingMove, true);
 
   App.SetScale(App.state.scale);
 };
@@ -99,13 +107,30 @@ App.SetOffset = (x, y) => {
   App.Var('offset-x', `${x}px`);
   App.Var('offset-y', `${y}px`);
 };
-App.SetGridElement = (element, direction, value) => {
-  direction = Number.isNaN(+direction) ? 0 : +direction;
-  direction = Math.min(Math.max(direction, 0), 3);
-  direction *= 90;
-  App.VarElem(element.arrow, 'r', `${direction}deg`);
-  App.VarElem(element.number, 'r', `${-direction}deg`);
-  element.number.innerText = value;
+App.SetGridElement = (element, options) => {
+  let direction = options.direction;
+  let index = options.index;
+  let count = options.count;
+  if (direction !== undefined) {
+    direction = Number.isNaN(+direction) ? 0 : +direction;
+    direction = Math.min(Math.max(direction, 0), 3);
+    direction *= 90;
+    App.VarElem(element.arrow, 'r', `${direction}deg`);
+    App.VarElem(element.number, 'r', `${-direction}deg`);
+    element.direction = direction;
+  }
+
+  if (index !== undefined) {
+    index = Number.isNaN(+index) ? 0 : +index;
+    element.index = index;
+  }
+  
+  if (count !== undefined) {
+    count = Number.isNaN(+count) ? 0 : +count;
+    element.count = count;
+  }
+
+  element.number.innerText = `${element.index},${element.count}`;
 };
 App.Generate = () => {
   const { articleObject } = App.elements;
@@ -113,24 +138,30 @@ App.Generate = () => {
   articleObject.innerHTML = '';
   articleObject.style.width = `${countX * gridElementSize}px`;
   articleObject.style.height = `${countY * gridElementSize}px`;
+
+  const grid = new Array(countY);
+  for (let y = 0, index = 0; y < countY; y++) {
+    grid[y] = new Array(countX);
+    for (let x = 0; x < countX; x++, index++) {
+      const element = App.CreateArrowElement();
+      App.elements.articleObject.appendChild(element.span);
+      App.SetGridElement(element, {index});
+      grid[y][x] = element;
+    }
+  }
+
+  App.state.grid = grid;
 };
 
 /* Graphics */
-App.CreateArrowElement = (size) => {
+App.CreateArrowElement = () => {
   const span = App.Create('span');
-  span.className = 'arrow';
-  span.style.width = `${size}px`;
-  span.style.height = `${size}px`;
-
   const arrowSpan = App.Create('span');
-  arrowSpan.className = 'arrow__icon';
-  arrowSpan.style.width = `${size - 8}px`;
-  arrowSpan.style.height = `${size - 8}px`;
-  span.appendChild(arrowSpan);
-
   const numberSpan = App.Create('span');
+  span.className = 'arrow';
+  arrowSpan.className = 'arrow__icon';
   numberSpan.className = 'arrow__number';
-  numberSpan.innerText = '12';
+  span.appendChild(arrowSpan);
   arrowSpan.appendChild(numberSpan);
 
   return {
@@ -138,6 +169,8 @@ App.CreateArrowElement = (size) => {
     arrow: arrowSpan,
     number: numberSpan,
     direction: 0,
+    index: 0,
+    count: 0,
   };
 };
 
@@ -154,10 +187,7 @@ App.Start = () => {
   App.elements = App.GetElements();
   App.PrepareElements();
 
-  // test
-  const element = App.CreateArrowElement(30);
-  App.SetGridElement(element, 1, 'Х');
-  App.elements.articleObject.appendChild(element.span);
+  App.Generate();
 };
 
 window.onload = App.Start;
