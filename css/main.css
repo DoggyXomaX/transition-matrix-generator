@@ -21,7 +21,6 @@ body { color: #FFFFFF; }
   position: relative;
   padding: 2px;
   border: solid 2px #000000;
-  border-style: inset;
   background-color: #FFFFFF;
 }
 .arrow__icon {
