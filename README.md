@@ -13,7 +13,7 @@ If the picture did not load, then here is the description from left to right:
 - Number of cells on the X axis
 - Number of cells on the Y axis
 - Generate
-- Zoom button
+- Current viewport scale
 - Zoom in
 - Zoom out
 - Reset scale
