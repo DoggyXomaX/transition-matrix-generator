@@ -45,6 +45,10 @@ App.SetGridElement = (element, options) => {
   if (count !== undefined) {
     count = Number.isNaN(+count) ? 0 : +count;
     element.count = count;
+    if (element.count === 0) 
+      element.arrow.className = 'arrow__icon arrow__icon--last';
+    else
+      element.arrow.className = 'arrow__icon';
   }
 
   element.number.innerText = `${element.index},${element.count}`;

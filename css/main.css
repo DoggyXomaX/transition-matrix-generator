@@ -29,9 +29,14 @@ body { color: #FFFFFF; }
   width: calc(var(--grid-element-size) - 8px);
   height: calc(var(--grid-element-size) - 8px);
   background-size: calc(var(--grid-element-size) - 8px);
+  /* arrow */
   background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAwIDAgMCA1MGwxMDAgNTBWMFoiIGZpbGw9IiMwMDAiLz48L3N2Zz4=);
   transition: transform 0.5s;
   transform: rotate(var(--r));
+}
+.arrow__icon--last {
+  /* circle */
+  background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgMTAwIDEwMCIgZmlsbD0iIzAwMCI+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNTAiLz48L3N2Zz4=);
 }
 .arrow__number {
   --r: 0deg;

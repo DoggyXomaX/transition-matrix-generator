@@ -35,7 +35,7 @@ App.CreateGrid = (options) => {
     for (let x = 0; x < countX; x++, index++) {
       const element = App.CreateArrowElement();
       App.elements.articleObject.appendChild(element.span);
-      App.SetGridElement(element, {index});
+      App.SetGridElement(element, {index, count: 0});
       grid[y][x] = element;
     }
   }
