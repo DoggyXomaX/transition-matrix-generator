@@ -1,341 +1,42 @@
-const App = {
-  elements: null,
-  state: {
-    offset: { x: 0, y: 0 },
-    mouse: {
-      isDown: false,
-      start: { x: 0, y: 0 },
-      current: { x: 0, y: 0 },
-    },
-    grid: [],
-  },
-  settings: {
-    countX: 5,
-    countY: 5,
-    scale: 1,
-    scaleStep: 0.8,
-    gridElementSize: 30,
-  },
-};
-  
-App.OnCountXChanged = (e) => {
-  const reg = /\d*/g.exec(e.target.value);
-  App.SetCountX(reg[0] ? +reg[0] : undefined);
-};
-App.OnCountYChanged = (e) => {
-  const reg = /\d*/g.exec(e.target.value);
-  App.SetCountY(reg[0] ? +reg[0] : undefined);
-};
-
-App.OnScaleWheel = (e) => (e.deltaY > 0 ? App.OnScaleDown : App.OnScaleUp)();
-App.OnScaleChanged = (e) => {
-  const reg = /[0-9\.]*/g.exec(e.target.value);
-  App.SetScale(reg[0] ? +reg[0] * 0.01 : undefined);
-};
-App.OnScaleUp = () => App.SetScale(App.settings.scale / App.settings.scaleStep);
-App.OnScaleDown = () => App.SetScale(App.settings.scale * App.settings.scaleStep);
-App.OnScaleReset = () => App.SetScale(1);
-
-App.OnMovingDown = (e) => {
-  if (e.target !== App.elements.mainObject) return;
-  if (e.button !== 0) return;
-  const { mouse } = App.state;
-  mouse.start.x = e.screenX;
-  mouse.start.y = e.screenY;
-  mouse.current.x = mouse.start.x;
-  mouse.current.y = mouse.start.y;
-  mouse.isDown = true;
-};
-App.OnMovingMove = (e) => {
-  const { mouse, offset } = App.state;
-  if (!mouse.isDown) return;
-  mouse.current.x = e.screenX;
-  mouse.current.y = e.screenY;
-  const { x, y } = mouse.start;
-  const dx = mouse.current.x - x;
-  const dy = mouse.current.y - y;
-  App.Var('offset-x', `${offset.x + dx}px`);
-  App.Var('offset-y', `${offset.y + dy}px`);
-};
-App.OnMovingUp = (e) => {
-  if (e.button !== 0) return;
-  const { mouse, offset } = App.state;
-  if (!mouse.isDown) return;
-  mouse.isDown = false;
-  App.SetOffset(
-    offset.x + mouse.current.x - mouse.start.x,
-    offset.y + mouse.current.y - mouse.start.y,
-  );
-};
-App.OnMovingReset = () => App.SetOffset(0, 0);
-
-App.OnCellClick = function() {
-  const { element } = this;
-  App.SetGridElement(element, { direction: element.direction + 1 });
-};
-App.OnCellContext = function(e) {
-  e.preventDefault();
-  const { element } = this;
-  App.SetGridElement(element, { direction: element.direction - 1 });
-};
-
-App.OnGenerate = () => App.Generate();
-
-App.SetScale = (value) => {
-  if (!value) value = App.settings.scale;
-  App.settings.scale = value;
-  App.elements.scaleInput.value = `${(value * 100).toFixed(2)}%`;
-  App.Var('scale', value);
-};
-
-App.SetOffset = (x, y) => {
-  x = Number.isNaN(+x) ? App.state.offset.x : x;
-  y = Number.isNaN(+y) ? App.state.offset.y : y;
-  App.state.offset.x = x;
-  App.state.offset.y = y;
-  App.Var('offset-x', `${x}px`);
-  App.Var('offset-y', `${y}px`);
-};
-
-App.SetCountX = (value) => {
-  if (!value) value = App.settings.countX;
-  App.settings.countX = value;
-  App.elements.countXInput.value = value;
-};
-
-App.SetCountY = (value) => {
-  if (!value) value = App.settings.countY;
-  App.settings.countY = value;
-  App.elements.countYInput.value = value;
-};
-
-App.SetGridElement = (element, options) => {
-  let direction = options.direction;
-  if (direction !== undefined) {
-    direction = Number.isNaN(+direction) ? 0 : +direction;
-    App.VarElem(element.arrow, 'r', `${direction * 90}deg`);
-    App.VarElem(element.number, 'r', `${-direction * 90}deg`);
-    element.direction = direction;
-  }
-  
-  let index = options.index;
-  if (index !== undefined) {
-    index = Number.isNaN(+index) ? 0 : +index;
-    element.index = index;
-  }
-  
-  let count = options.count;
-  if (count !== undefined) {
-    count = Number.isNaN(+count) ? 0 : +count;
-    element.count = count;
-    if (element.count === 0) 
-      element.arrow.className = 'arrow__icon arrow__icon--last';
-    else
-      element.arrow.className = 'arrow__icon';
-  }
-
-  element.number.innerText = `${element.index},${element.count}`;
-};
-App.SetGridElementXY = (x, y, options) => App.SetGridElement(App.state.grid[y][x], options);
-App.Generate = async () => {
-  const { gridElementSize, countX, countY } = App.settings;
-  const { articleObject } = App.elements;
-  App.state.grid = App.CreateGrid({
-    gridElementSize, countX, countY,
-    articleObject,
-  });
-
-  const grid = await App.Trace(countX, countY);
-  console.log(grid);
-  for (let y = 0, i = 0; y < countY; y++) {
-    for (let x = 0; x < countX; x++, i++) {
-      App.SetGridElementXY(x, y, grid[i]);
-    }
-  }
-};
-
-App.CreateArrowElement = () => {
-  const span = App.Create('span');
-  const arrowSpan = App.Create('span');
-  const numberSpan = App.Create('span');
-  span.className = 'arrow';
-  arrowSpan.className = 'arrow__icon';
-  numberSpan.className = 'arrow__number';
-  span.appendChild(arrowSpan);
-  arrowSpan.appendChild(numberSpan);
-
-  span.addEventListener('click', App.OnCellClick, true);
-  span.addEventListener('contextmenu', App.OnCellContext, true);
-  span.addEventListener('mousedown', function(e) { e.stopPropagation(); e.preventDefault(); }, true);
-  arrowSpan.addEventListener('mousedown', function(e) { e.stopPropagation(); e.preventDefault(); }, true);
-  numberSpan.addEventListener('mousedown', function(e) { e.stopPropagation(); e.preventDefault(); }, true);
-
-  const element = {
-    span: span,
-    arrow: arrowSpan,
-    number: numberSpan,
-    direction: 0,
-    index: 0,
-    count: 0,
-  };
-  span.element = element;
-
-  return element;
-};
-App.CreateGrid = (options) => {
-  const { articleObject, gridElementSize, countX, countY } = options;
-  articleObject.innerHTML = '';
-  articleObject.style.width = `${countX * gridElementSize}px`;
-  articleObject.style.height = `${countY * gridElementSize}px`;
-
-  const grid = new Array(countY);
-  for (let y = 0, index = 0; y < countY; y++) {
-    grid[y] = new Array(countX);
-    for (let x = 0; x < countX; x++, index++) {
-      const element = App.CreateArrowElement();
-      App.elements.articleObject.appendChild(element.span);
-      App.SetGridElement(element, {index, count: 0});
-      grid[y][x] = element;
-    }
-  }
-
-  return grid;
-};
-
-App.Trace = async (countX, countY) => {
-  const map = new Array(countX * countY);
-  let count = 1;
-  let currentNode = {
-    prev: null,
-    x: Math.random() * countX >> 0,
-    y: Math.random() * countY >> 0,
-    targets: null,
-    targetIndex: null,
-  };
-
-  const FindEmptyCells = (x, y) => {
-    const arr = new Array(countX + countY - 2);
-    let p = 0;
-
-    for (let i = 0; i < countX; i++)
-      if (i !== x && !map[y * countX + i])
-        arr[p++] = {x: i, y};
-    for (let i = 0; i < countY; i++)
-      if (i !== y && !map[i * countX + x])
-        arr[p++] = {x, y: i};
-
-    arr.length = p;
-    return arr;
-  };
-
-  for (let i = 0, k = countX * countY; i < k; i++) map[i] = false;
-  currentNode.targets = FindEmptyCells(currentNode.x, currentNode.y);
-  map[currentNode.y * countX + currentNode.x] = true;
-
-  while (count != countX * countY) {
-    if (currentNode.targets.length === 0) {
-      count--;
-      map[currentNode.y * countX + currentNode.x] = false;
-      currentNode = currentNode.prev;
-      currentNode.targets.splice(currentNode.targetIndex, 1);
-    } else {
-      currentNode.targetIndex = Math.random() * currentNode.targets.length >> 0;
-      const pos = currentNode.targets[currentNode.targetIndex];
-      const newNode = {
-        prev: currentNode,
-        x: pos.x,
-        y: pos.y,
-        targets: FindEmptyCells(pos.x, pos.y),
-        targetIndex: null,
-      };
-      currentNode = newNode;
-      map[pos.y * countX + pos.x] = true;
-      count++;
-    }
-  }
-
-  const grid = new Array(count);
-  let index = count - 1;
-  let direction = 0;
-  count = 0;
-  grid[currentNode.y * countX + currentNode.x] = { index, direction, count };
-
-  while (index--) {
-    const posX = currentNode.x;
-    const posY = currentNode.y;
-    
-    currentNode = currentNode.prev;
-    const prevX = currentNode.x;
-    const prevY = currentNode.y;
-    
-    const dx = posX - prevX;
-    const dy = posY - prevY;
-    
-    if (dx > 0) direction = 2;
-    else if (dy < 0) direction = 1;
-    else if (dy > 0) direction = 3;
-    else direction = 0;
-    count = Math.abs(dx + dy);
-
-    grid[prevY * countX + prevX] = { index, direction, count };
-  }
-
-  return grid;
-};
-
-/* Main methods */
-App.GetElements = () => {
-  const tags = [
-    ...App.Tag('input'),
-    ...App.Tag('button'),
-    ...App.Tag('article'),
-    ...App.Tag('main'),
-  ];
-  const elements = {};
-  tags.forEach(e => elements[e.id] = e);
-  return elements;
-};
-
-App.PrepareElements = () => {
-  const {
-    generateButton,
-    countXInput, countYInput,
-    scaleInput, scaleUpButton, scaleDownButton, scaleResetButton, offsetResetButton,
-    mainObject,
-  } = App.elements;
- 
-  generateButton.addEventListener('click', App.OnGenerate);
-
-  countXInput.addEventListener('change', App.OnCountXChanged, true);
-  countYInput.addEventListener('change', App.OnCountYChanged, true);
-
-  scaleInput.addEventListener('change', App.OnScaleChanged, true);
-  scaleUpButton.addEventListener('click', App.OnScaleUp);
-  scaleDownButton.addEventListener('click', App.OnScaleDown);
-  scaleResetButton.addEventListener('click', App.OnScaleReset);
-  offsetResetButton.addEventListener('click', App.OnMovingReset);
-
-  mainObject.addEventListener('wheel', App.OnScaleWheel, true);
-  mainObject.addEventListener('mousedown', App.OnMovingDown, true);
-  window.addEventListener('mouseup', App.OnMovingUp, true);
-  mainObject.addEventListener('mousemove', App.OnMovingMove, true);
-
-  App.SetScale(App.state.scale);
-  App.Generate();
-};
-
-/* Shortcuts */
-App.Tag = (tag) => document.getElementsByTagName(tag);
-App.Class = (className) => document.getElementsByClassName(className);
-App.Get = (id) => document.getElementById(id);
-App.Var = (name, value) => document.documentElement.style.setProperty(`--${name}`, value);
-App.VarElem = (element, name, value) => element.style.setProperty(`--${name}`, value);
-App.Create = (tag) => document.createElement(tag);
-
-/* Init */
-App.Start = () => {
-  App.elements = App.GetElements();
-  App.PrepareElements();
-};
-
-window.onload = App.Start;
+var $jscomp=$jscomp||{};$jscomp.scope={};$jscomp.arrayIteratorImpl=function(a){var b=0;return function(){return b<a.length?{done:!1,value:a[b++]}:{done:!0}}};$jscomp.arrayIterator=function(a){return{next:$jscomp.arrayIteratorImpl(a)}};$jscomp.makeIterator=function(a){var b="undefined"!=typeof Symbol&&Symbol.iterator&&a[Symbol.iterator];return b?b.call(a):$jscomp.arrayIterator(a)};$jscomp.arrayFromIterator=function(a){for(var b,c=[];!(b=a.next()).done;)c.push(b.value);return c};
+$jscomp.arrayFromIterable=function(a){return a instanceof Array?a:$jscomp.arrayFromIterator($jscomp.makeIterator(a))};$jscomp.getGlobal=function(a){return"undefined"!=typeof window&&window===a?a:"undefined"!=typeof global&&null!=global?global:a};$jscomp.global=$jscomp.getGlobal(this);$jscomp.ASSUME_ES5=!1;$jscomp.ASSUME_NO_NATIVE_MAP=!1;$jscomp.ASSUME_NO_NATIVE_SET=!1;
+$jscomp.defineProperty=$jscomp.ASSUME_ES5||"function"==typeof Object.defineProperties?Object.defineProperty:function(a,b,c){a!=Array.prototype&&a!=Object.prototype&&(a[b]=c.value)};$jscomp.polyfill=function(a,b,c,e){if(b){c=$jscomp.global;a=a.split(".");for(e=0;e<a.length-1;e++){var d=a[e];d in c||(c[d]={});c=c[d]}a=a[a.length-1];e=c[a];b=b(e);b!=e&&null!=b&&$jscomp.defineProperty(c,a,{configurable:!0,writable:!0,value:b})}};$jscomp.FORCE_POLYFILL_PROMISE=!1;
+$jscomp.polyfill("Promise",function(a){function b(){this.batch_=null}function c(a){return a instanceof d?a:new d(function(b,c){b(a)})}if(a&&!$jscomp.FORCE_POLYFILL_PROMISE)return a;b.prototype.asyncExecute=function(a){null==this.batch_&&(this.batch_=[],this.asyncExecuteBatch_());this.batch_.push(a);return this};b.prototype.asyncExecuteBatch_=function(){var a=this;this.asyncExecuteFunction(function(){a.executeBatch_()})};var e=$jscomp.global.setTimeout;b.prototype.asyncExecuteFunction=function(a){e(a,
+0)};b.prototype.executeBatch_=function(){for(;this.batch_&&this.batch_.length;){var a=this.batch_;this.batch_=[];for(var b=0;b<a.length;++b){var c=a[b];a[b]=null;try{c()}catch(k){this.asyncThrow_(k)}}}this.batch_=null};b.prototype.asyncThrow_=function(a){this.asyncExecuteFunction(function(){throw a;})};var d=function(a){this.state_=0;this.result_=void 0;this.onSettledCallbacks_=[];var b=this.createResolveAndReject_();try{a(b.resolve,b.reject)}catch(f){b.reject(f)}};d.prototype.createResolveAndReject_=
+function(){function a(a){return function(d){c||(c=!0,a.call(b,d))}}var b=this,c=!1;return{resolve:a(this.resolveTo_),reject:a(this.reject_)}};d.prototype.resolveTo_=function(a){if(a===this)this.reject_(new TypeError("A Promise cannot resolve to itself"));else if(a instanceof d)this.settleSameAsPromise_(a);else{a:switch(typeof a){case "object":var b=null!=a;break a;case "function":b=!0;break a;default:b=!1}b?this.resolveToNonPromiseObj_(a):this.fulfill_(a)}};d.prototype.resolveToNonPromiseObj_=function(a){var b=
+void 0;try{b=a.then}catch(f){this.reject_(f);return}"function"==typeof b?this.settleSameAsThenable_(b,a):this.fulfill_(a)};d.prototype.reject_=function(a){this.settle_(2,a)};d.prototype.fulfill_=function(a){this.settle_(1,a)};d.prototype.settle_=function(a,b){if(0!=this.state_)throw Error("Cannot settle("+a+", "+b+"): Promise already settled in state"+this.state_);this.state_=a;this.result_=b;this.executeOnSettledCallbacks_()};d.prototype.executeOnSettledCallbacks_=function(){if(null!=this.onSettledCallbacks_){for(var a=
+0;a<this.onSettledCallbacks_.length;++a)g.asyncExecute(this.onSettledCallbacks_[a]);this.onSettledCallbacks_=null}};var g=new b;d.prototype.settleSameAsPromise_=function(a){var b=this.createResolveAndReject_();a.callWhenSettled_(b.resolve,b.reject)};d.prototype.settleSameAsThenable_=function(a,b){var c=this.createResolveAndReject_();try{a.call(b,c.resolve,c.reject)}catch(k){c.reject(k)}};d.prototype.then=function(a,b){function c(a,b){return"function"==typeof a?function(b){try{e(a(b))}catch(n){h(n)}}:
+b}var e,h,g=new d(function(a,b){e=a;h=b});this.callWhenSettled_(c(a,e),c(b,h));return g};d.prototype.catch=function(a){return this.then(void 0,a)};d.prototype.callWhenSettled_=function(a,b){function c(){switch(d.state_){case 1:a(d.result_);break;case 2:b(d.result_);break;default:throw Error("Unexpected state: "+d.state_);}}var d=this;null==this.onSettledCallbacks_?g.asyncExecute(c):this.onSettledCallbacks_.push(c)};d.resolve=c;d.reject=function(a){return new d(function(b,c){c(a)})};d.race=function(a){return new d(function(b,
+d){for(var e=$jscomp.makeIterator(a),h=e.next();!h.done;h=e.next())c(h.value).callWhenSettled_(b,d)})};d.all=function(a){var b=$jscomp.makeIterator(a),e=b.next();return e.done?c([]):new d(function(a,d){function h(b){return function(c){g[b]=c;f--;0==f&&a(g)}}var g=[],f=0;do g.push(void 0),f++,c(e.value).callWhenSettled_(h(g.length-1),d),e=b.next();while(!e.done)})};return d},"es6","es3");$jscomp.SYMBOL_PREFIX="jscomp_symbol_";
+$jscomp.initSymbol=function(){$jscomp.initSymbol=function(){};$jscomp.global.Symbol||($jscomp.global.Symbol=$jscomp.Symbol)};$jscomp.Symbol=function(){var a=0;return function(b){return $jscomp.SYMBOL_PREFIX+(b||"")+a++}}();
+$jscomp.initSymbolIterator=function(){$jscomp.initSymbol();var a=$jscomp.global.Symbol.iterator;a||(a=$jscomp.global.Symbol.iterator=$jscomp.global.Symbol("iterator"));"function"!=typeof Array.prototype[a]&&$jscomp.defineProperty(Array.prototype,a,{configurable:!0,writable:!0,value:function(){return $jscomp.iteratorPrototype($jscomp.arrayIteratorImpl(this))}});$jscomp.initSymbolIterator=function(){}};
+$jscomp.initSymbolAsyncIterator=function(){$jscomp.initSymbol();var a=$jscomp.global.Symbol.asyncIterator;a||(a=$jscomp.global.Symbol.asyncIterator=$jscomp.global.Symbol("asyncIterator"));$jscomp.initSymbolAsyncIterator=function(){}};$jscomp.iteratorPrototype=function(a){$jscomp.initSymbolIterator();a={next:a};a[$jscomp.global.Symbol.iterator]=function(){return this};return a};$jscomp.underscoreProtoCanBeSet=function(){var a={a:!0},b={};try{return b.__proto__=a,b.a}catch(c){}return!1};
+$jscomp.setPrototypeOf="function"==typeof Object.setPrototypeOf?Object.setPrototypeOf:$jscomp.underscoreProtoCanBeSet()?function(a,b){a.__proto__=b;if(a.__proto__!==b)throw new TypeError(a+" is not extensible");return a}:null;$jscomp.generator={};$jscomp.generator.ensureIteratorResultIsObject_=function(a){if(!(a instanceof Object))throw new TypeError("Iterator result "+a+" is not an object");};
+$jscomp.generator.Context=function(){this.isRunning_=!1;this.yieldAllIterator_=null;this.yieldResult=void 0;this.nextAddress=1;this.finallyAddress_=this.catchAddress_=0;this.finallyContexts_=this.abruptCompletion_=null};$jscomp.generator.Context.prototype.start_=function(){if(this.isRunning_)throw new TypeError("Generator is already running");this.isRunning_=!0};$jscomp.generator.Context.prototype.stop_=function(){this.isRunning_=!1};
+$jscomp.generator.Context.prototype.jumpToErrorHandler_=function(){this.nextAddress=this.catchAddress_||this.finallyAddress_};$jscomp.generator.Context.prototype.next_=function(a){this.yieldResult=a};$jscomp.generator.Context.prototype.throw_=function(a){this.abruptCompletion_={exception:a,isException:!0};this.jumpToErrorHandler_()};$jscomp.generator.Context.prototype.return=function(a){this.abruptCompletion_={return:a};this.nextAddress=this.finallyAddress_};
+$jscomp.generator.Context.prototype.jumpThroughFinallyBlocks=function(a){this.abruptCompletion_={jumpTo:a};this.nextAddress=this.finallyAddress_};$jscomp.generator.Context.prototype.yield=function(a,b){this.nextAddress=b;return{value:a}};$jscomp.generator.Context.prototype.yieldAll=function(a,b){a=$jscomp.makeIterator(a);var c=a.next();$jscomp.generator.ensureIteratorResultIsObject_(c);if(c.done)this.yieldResult=c.value,this.nextAddress=b;else return this.yieldAllIterator_=a,this.yield(c.value,b)};
+$jscomp.generator.Context.prototype.jumpTo=function(a){this.nextAddress=a};$jscomp.generator.Context.prototype.jumpToEnd=function(){this.nextAddress=0};$jscomp.generator.Context.prototype.setCatchFinallyBlocks=function(a,b){this.catchAddress_=a;void 0!=b&&(this.finallyAddress_=b)};$jscomp.generator.Context.prototype.setFinallyBlock=function(a){this.catchAddress_=0;this.finallyAddress_=a||0};$jscomp.generator.Context.prototype.leaveTryBlock=function(a,b){this.nextAddress=a;this.catchAddress_=b||0};
+$jscomp.generator.Context.prototype.enterCatchBlock=function(a){this.catchAddress_=a||0;a=this.abruptCompletion_.exception;this.abruptCompletion_=null;return a};$jscomp.generator.Context.prototype.enterFinallyBlock=function(a,b,c){c?this.finallyContexts_[c]=this.abruptCompletion_:this.finallyContexts_=[this.abruptCompletion_];this.catchAddress_=a||0;this.finallyAddress_=b||0};
+$jscomp.generator.Context.prototype.leaveFinallyBlock=function(a,b){b=this.finallyContexts_.splice(b||0)[0];if(b=this.abruptCompletion_=this.abruptCompletion_||b){if(b.isException)return this.jumpToErrorHandler_();void 0!=b.jumpTo&&this.finallyAddress_<b.jumpTo?(this.nextAddress=b.jumpTo,this.abruptCompletion_=null):this.nextAddress=this.finallyAddress_}else this.nextAddress=a};$jscomp.generator.Context.prototype.forIn=function(a){return new $jscomp.generator.Context.PropertyIterator(a)};
+$jscomp.generator.Context.PropertyIterator=function(a){this.object_=a;this.properties_=[];for(var b in a)this.properties_.push(b);this.properties_.reverse()};$jscomp.generator.Context.PropertyIterator.prototype.getNext=function(){for(;0<this.properties_.length;){var a=this.properties_.pop();if(a in this.object_)return a}return null};$jscomp.generator.Engine_=function(a){this.context_=new $jscomp.generator.Context;this.program_=a};
+$jscomp.generator.Engine_.prototype.next_=function(a){this.context_.start_();if(this.context_.yieldAllIterator_)return this.yieldAllStep_(this.context_.yieldAllIterator_.next,a,this.context_.next_);this.context_.next_(a);return this.nextStep_()};
+$jscomp.generator.Engine_.prototype.return_=function(a){this.context_.start_();var b=this.context_.yieldAllIterator_;if(b)return this.yieldAllStep_("return"in b?b["return"]:function(a){return{value:a,done:!0}},a,this.context_.return);this.context_.return(a);return this.nextStep_()};
+$jscomp.generator.Engine_.prototype.throw_=function(a){this.context_.start_();if(this.context_.yieldAllIterator_)return this.yieldAllStep_(this.context_.yieldAllIterator_["throw"],a,this.context_.next_);this.context_.throw_(a);return this.nextStep_()};
+$jscomp.generator.Engine_.prototype.yieldAllStep_=function(a,b,c){try{var e=a.call(this.context_.yieldAllIterator_,b);$jscomp.generator.ensureIteratorResultIsObject_(e);if(!e.done)return this.context_.stop_(),e;var d=e.value}catch(g){return this.context_.yieldAllIterator_=null,this.context_.throw_(g),this.nextStep_()}this.context_.yieldAllIterator_=null;c.call(this.context_,d);return this.nextStep_()};
+$jscomp.generator.Engine_.prototype.nextStep_=function(){for(;this.context_.nextAddress;)try{var a=this.program_(this.context_);if(a)return this.context_.stop_(),{value:a.value,done:!1}}catch(b){this.context_.yieldResult=void 0,this.context_.throw_(b)}this.context_.stop_();if(this.context_.abruptCompletion_){a=this.context_.abruptCompletion_;this.context_.abruptCompletion_=null;if(a.isException)throw a.exception;return{value:a.return,done:!0}}return{value:void 0,done:!0}};
+$jscomp.generator.Generator_=function(a){this.next=function(b){return a.next_(b)};this.throw=function(b){return a.throw_(b)};this.return=function(b){return a.return_(b)};$jscomp.initSymbolIterator();this[Symbol.iterator]=function(){return this}};$jscomp.generator.createGenerator=function(a,b){b=new $jscomp.generator.Generator_(new $jscomp.generator.Engine_(b));$jscomp.setPrototypeOf&&$jscomp.setPrototypeOf(b,a.prototype);return b};
+$jscomp.asyncExecutePromiseGenerator=function(a){function b(b){return a.next(b)}function c(b){return a.throw(b)}return new Promise(function(e,d){function g(a){a.done?e(a.value):Promise.resolve(a.value).then(b,c).then(g,d)}g(a.next())})};$jscomp.asyncExecutePromiseGeneratorFunction=function(a){return $jscomp.asyncExecutePromiseGenerator(a())};$jscomp.asyncExecutePromiseGeneratorProgram=function(a){return $jscomp.asyncExecutePromiseGenerator(new $jscomp.generator.Generator_(new $jscomp.generator.Engine_(a)))};
+$jscomp.polyfill("Number.isNaN",function(a){return a?a:function(a){return"number"===typeof a&&isNaN(a)}},"es6","es3");
+var App={elements:null,state:{offset:{x:0,y:0},mouse:{isDown:!1,start:{x:0,y:0},current:{x:0,y:0}},grid:[]},settings:{countX:5,countY:5,scale:1,scaleStep:.8,gridElementSize:30},OnCountXChanged:function(a){a=/\d*/g.exec(a.target.value);App.SetCountX(a[0]?+a[0]:void 0)},OnCountYChanged:function(a){a=/\d*/g.exec(a.target.value);App.SetCountY(a[0]?+a[0]:void 0)},OnScaleWheel:function(a){return(0<a.deltaY?App.OnScaleDown:App.OnScaleUp)()},OnScaleChanged:function(a){a=/[0-9\.]*/g.exec(a.target.value);App.SetScale(a[0]?
+.01*+a[0]:void 0)},OnScaleUp:function(){return App.SetScale(App.settings.scale/App.settings.scaleStep)},OnScaleDown:function(){return App.SetScale(App.settings.scale*App.settings.scaleStep)},OnScaleReset:function(){return App.SetScale(1)},OnMovingDown:function(a){if(a.target===App.elements.mainObject&&0===a.button){var b=App.state.mouse;b.start.x=a.screenX;b.start.y=a.screenY;b.current.x=b.start.x;b.current.y=b.start.y;b.isDown=!0}},OnMovingMove:function(a){var b=App.state,c=b.mouse;b=b.offset;if(c.isDown){c.current.x=
+a.screenX;c.current.y=a.screenY;a=c.start;var e=c.current.y-a.y;App.Var("offset-x",b.x+(c.current.x-a.x)+"px");App.Var("offset-y",b.y+e+"px")}},OnMovingUp:function(a){if(0===a.button){var b=App.state;a=b.mouse;b=b.offset;a.isDown&&(a.isDown=!1,App.SetOffset(b.x+a.current.x-a.start.x,b.y+a.current.y-a.start.y))}},OnMovingReset:function(){return App.SetOffset(0,0)},OnCellClick:function(){var a=this.element;App.SetGridElement(a,{direction:a.direction+1})},OnCellContext:function(a){a.preventDefault();
+a=this.element;App.SetGridElement(a,{direction:a.direction-1})},OnGenerate:function(){return App.Generate()},SetScale:function(a){a||(a=App.settings.scale);App.settings.scale=a;App.elements.scaleInput.value=(100*a).toFixed(2)+"%";App.Var("scale",a)},SetOffset:function(a,b){a=Number.isNaN(+a)?App.state.offset.x:a;b=Number.isNaN(+b)?App.state.offset.y:b;App.state.offset.x=a;App.state.offset.y=b;App.Var("offset-x",a+"px");App.Var("offset-y",b+"px")},SetCountX:function(a){a||(a=App.settings.countX);App.settings.countX=
+a;App.elements.countXInput.value=a},SetCountY:function(a){a||(a=App.settings.countY);App.settings.countY=a;App.elements.countYInput.value=a},SetGridElement:function(a,b){var c=b.direction;void 0!==c&&(c=Number.isNaN(+c)?0:+c,App.VarElem(a.arrow,"r",90*c+"deg"),App.VarElem(a.number,"r",90*-c+"deg"),a.direction=c);c=b.index;void 0!==c&&(c=Number.isNaN(+c)?0:+c,a.index=c);b=b.count;void 0!==b&&(b=Number.isNaN(+b)?0:+b,a.count=b,a.arrow.className=0===a.count?"arrow__icon arrow__icon--last":"arrow__icon");
+a.number.innerText=a.index+","+a.count},SetGridElementXY:function(a,b,c){return App.SetGridElement(App.state.grid[b][a],c)},Generate:function(){var a,b,c,e,d,g,h,l,f,k;return $jscomp.asyncExecutePromiseGeneratorProgram(function(m){if(1==m.nextAddress)return a=App.settings,b=a.gridElementSize,c=a.countX,e=a.countY,d=App.elements,g=d.articleObject,App.state.grid=App.CreateGrid({gridElementSize:b,countX:c,countY:e,articleObject:g}),m.yield(App.Trace(c,e),2);h=m.yieldResult;console.log(h);for(f=l=0;l<
+e;l++)for(k=0;k<c;k++,f++)App.SetGridElementXY(k,l,h[f]);m.jumpToEnd()})},CreateArrowElement:function(){var a=App.Create("span"),b=App.Create("span"),c=App.Create("span");a.className="arrow";b.className="arrow__icon";c.className="arrow__number";a.appendChild(b);b.appendChild(c);a.addEventListener("click",App.OnCellClick,!0);a.addEventListener("contextmenu",App.OnCellContext,!0);b={span:a,arrow:b,number:c,direction:0,index:0,count:0};return a.element=b},CreateGrid:function(a){var b=a.articleObject,
+c=a.gridElementSize,e=a.countX;a=a.countY;b.innerHTML="";b.style.width=e*c+"px";b.style.height=a*c+"px";b=Array(a);for(var d=c=0;c<a;c++){b[c]=Array(e);for(var g=0;g<e;g++,d++){var h=App.CreateArrowElement();App.elements.articleObject.appendChild(h.span);App.SetGridElement(h,{index:d,count:0});b[c][g]=h}}return b},Trace:function(a,b){var c,e,d,g,h,l,f,k,m,q,p,v,w,n,t,u,r;return $jscomp.asyncExecutePromiseGeneratorProgram(function(x){c=Array(a*b);e=1;d={prev:null,x:Math.random()*a>>0,y:Math.random()*
+b>>0,targets:null,targetIndex:null};g=function(d,e){for(var g=Array(a+b-2),h=0,f=0;f<a;f++)f===d||c[e*a+f]||(g[h++]={x:f,y:e});for(f=0;f<b;f++)f===e||c[f*a+d]||(g[h++]={x:d,y:f});g.length=h;return g};h=0;for(l=a*b;h<l;h++)c[h]=!1;d.targets=g(d.x,d.y);for(c[d.y*a+d.x]=!0;e!=a*b;)0===d.targets.length?(e--,c[d.y*a+d.x]=!1,d=d.prev,d.targets.splice(d.targetIndex,1)):(d.targetIndex=Math.random()*d.targets.length>>0,f=d.targets[d.targetIndex],d=k={prev:d,x:f.x,y:f.y,targets:g(f.x,f.y),targetIndex:null},
+c[f.y*a+f.x]=!0,e++);m=Array(e);q=e-1;e=p=0;for(m[d.y*a+d.x]={index:q,direction:p,count:e};q--;)v=d.x,w=d.y,d=d.prev,n=d.x,t=d.y,u=v-n,r=w-t,p=0<u?2:0>r?1:0<r?3:0,e=Math.abs(u+r),m[t*a+n]={index:q,direction:p,count:e};return x.return(m)})},GetElements:function(){var a={};[].concat($jscomp.arrayFromIterable(App.Tag("input")),$jscomp.arrayFromIterable(App.Tag("button")),$jscomp.arrayFromIterable(App.Tag("article")),$jscomp.arrayFromIterable(App.Tag("main"))).forEach(function(b){return a[b.id]=b});return a},
+PrepareElements:function(){var a=App.elements,b=a.countXInput,c=a.countYInput,e=a.scaleInput,d=a.scaleUpButton,g=a.scaleDownButton,h=a.scaleResetButton,l=a.offsetResetButton,f=a.mainObject;a.generateButton.addEventListener("click",App.OnGenerate);b.addEventListener("change",App.OnCountXChanged,!0);c.addEventListener("change",App.OnCountYChanged,!0);e.addEventListener("change",App.OnScaleChanged,!0);d.addEventListener("click",App.OnScaleUp);g.addEventListener("click",App.OnScaleDown);h.addEventListener("click",
+App.OnScaleReset);l.addEventListener("click",App.OnMovingReset);f.addEventListener("wheel",App.OnScaleWheel,!0);f.addEventListener("mousedown",App.OnMovingDown,!0);window.addEventListener("mouseup",App.OnMovingUp,!0);f.addEventListener("mousemove",App.OnMovingMove,!0);App.SetScale(App.state.scale);App.Generate()},Tag:function(a){return document.getElementsByTagName(a)},Class:function(a){return document.getElementsByClassName(a)},Get:function(a){return document.getElementById(a)},Var:function(a,b){return document.documentElement.style.setProperty("--"+
+a,b)},VarElem:function(a,b,c){return a.style.setProperty("--"+b,c)},Create:function(a){return document.createElement(a)},Start:function(){App.elements=App.GetElements();App.PrepareElements()}};window.onload=App.Start;
