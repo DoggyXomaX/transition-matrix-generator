@@ -1,0 +1,22 @@
+{
+  "name": "transition-matrix-generator",
+  "version": "1.0.0",
+  "description": "Meow",
+  "main": "concat.js",
+  "scripts": {
+    "start": "node concat.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DoggyXomaX/transition-matrix-generator.git"
+  },
+  "author": "DoggyXomaX",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DoggyXomaX/transition-matrix-generator/issues"
+  },
+  "homepage": "https://github.com/DoggyXomaX/transition-matrix-generator#readme",
+  "dependencies": {
+    "node-minify": "^3.6.0"
+  }
+}
