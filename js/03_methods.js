@@ -30,10 +30,8 @@ App.SetGridElement = (element, options) => {
   let direction = options.direction;
   if (direction !== undefined) {
     direction = Number.isNaN(+direction) ? 0 : +direction;
-    direction = Math.min(Math.max(direction, 0), 3);
-    direction *= 90;
-    App.VarElem(element.arrow, 'r', `${direction}deg`);
-    App.VarElem(element.number, 'r', `${-direction}deg`);
+    App.VarElem(element.arrow, 'r', `${direction * 90}deg`);
+    App.VarElem(element.number, 'r', `${-direction * 90}deg`);
     element.direction = direction;
   }
   

@@ -8,7 +8,10 @@ App.CreateArrowElement = () => {
   span.appendChild(arrowSpan);
   arrowSpan.appendChild(numberSpan);
 
-  return {
+  span.addEventListener('click', App.OnCellClick, true);
+  span.addEventListener('contextmenu', App.OnCellContext, true);
+
+  const element = {
     span: span,
     arrow: arrowSpan,
     number: numberSpan,
@@ -16,6 +19,9 @@ App.CreateArrowElement = () => {
     index: 0,
     count: 0,
   };
+  span.element = element;
+
+  return element;
 };
 App.CreateGrid = (options) => {
   const { articleObject, gridElementSize, countX, countY } = options;

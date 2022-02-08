@@ -17,6 +17,7 @@ App.OnScaleDown = () => App.SetScale(App.settings.scale * App.settings.scaleStep
 App.OnScaleReset = () => App.SetScale(1);
 
 App.OnMovingDown = (e) => {
+  if (e.button !== 0) return;
   const { mouse } = App.state;
   mouse.start.x = e.screenX;
   mouse.start.y = e.screenY;
@@ -35,7 +36,8 @@ App.OnMovingMove = (e) => {
   App.Var('offset-x', `${offset.x + dx}px`);
   App.Var('offset-y', `${offset.y + dy}px`);
 };
-App.OnMovingUp = () => {
+App.OnMovingUp = (e) => {
+  if (e.button !== 0) return;
   const { mouse, offset } = App.state;
   if (!mouse.isDown) return;
   mouse.isDown = false;
@@ -45,5 +47,15 @@ App.OnMovingUp = () => {
   );
 };
 App.OnMovingReset = () => App.SetOffset(0, 0);
+
+App.OnCellClick = function() {
+  const { element } = this;
+  App.SetGridElement(element, { direction: element.direction + 1 });
+};
+App.OnCellContext = function(e) {
+  e.preventDefault();
+  const { element } = this;
+  App.SetGridElement(element, { direction: element.direction - 1 });
+};
 
 App.OnGenerate = () => App.Generate();
