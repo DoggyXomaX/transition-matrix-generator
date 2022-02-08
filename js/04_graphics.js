@@ -10,6 +10,9 @@ App.CreateArrowElement = () => {
 
   span.addEventListener('click', App.OnCellClick, true);
   span.addEventListener('contextmenu', App.OnCellContext, true);
+  span.addEventListener('mousedown', function(e) { e.stopPropagation(); e.preventDefault(); }, true);
+  arrowSpan.addEventListener('mousedown', function(e) { e.stopPropagation(); e.preventDefault(); }, true);
+  numberSpan.addEventListener('mousedown', function(e) { e.stopPropagation(); e.preventDefault(); }, true);
 
   const element = {
     span: span,

@@ -37,6 +37,7 @@ App.OnScaleDown = () => App.SetScale(App.settings.scale * App.settings.scaleStep
 App.OnScaleReset = () => App.SetScale(1);
 
 App.OnMovingDown = (e) => {
+  if (e.target !== App.elements.mainObject) return;
   if (e.button !== 0) return;
   const { mouse } = App.state;
   mouse.start.x = e.screenX;
@@ -165,6 +166,9 @@ App.CreateArrowElement = () => {
 
   span.addEventListener('click', App.OnCellClick, true);
   span.addEventListener('contextmenu', App.OnCellContext, true);
+  span.addEventListener('mousedown', function(e) { e.stopPropagation(); e.preventDefault(); }, true);
+  arrowSpan.addEventListener('mousedown', function(e) { e.stopPropagation(); e.preventDefault(); }, true);
+  numberSpan.addEventListener('mousedown', function(e) { e.stopPropagation(); e.preventDefault(); }, true);
 
   const element = {
     span: span,

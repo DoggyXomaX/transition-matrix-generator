@@ -17,6 +17,7 @@ App.OnScaleDown = () => App.SetScale(App.settings.scale * App.settings.scaleStep
 App.OnScaleReset = () => App.SetScale(1);
 
 App.OnMovingDown = (e) => {
+  if (e.target !== App.elements.mainObject) return;
   if (e.button !== 0) return;
   const { mouse } = App.state;
   mouse.start.x = e.screenX;
