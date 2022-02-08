@@ -1,10 +1,10 @@
 App.OnCountXChanged = (e) => {
   const reg = /\d*/g.exec(e.target.value);
-  App.SetCountX(reg[0] ? +reg[0] * 0.01 : undefined);
+  App.SetCountX(reg[0] ? +reg[0] : undefined);
 };
 App.OnCountYChanged = (e) => {
   const reg = /\d*/g.exec(e.target.value);
-  App.SetCountY(reg[0] ? +reg[0] * 0.01 : undefined);
+  App.SetCountY(reg[0] ? +reg[0] : undefined);
 };
 
 App.OnScaleWheel = (e) => (e.deltaY > 0 ? App.OnScaleDown : App.OnScaleUp)();
