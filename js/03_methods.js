@@ -54,11 +54,19 @@ App.SetGridElement = (element, options) => {
   element.number.innerText = `${element.index},${element.count}`;
 };
 App.SetGridElementXY = (x, y, options) => App.SetGridElement(App.state.grid[y][x], options);
-App.Generate = () => {
+App.Generate = async () => {
   const { gridElementSize, countX, countY } = App.settings;
   const { articleObject } = App.elements;
   App.state.grid = App.CreateGrid({
     gridElementSize, countX, countY,
     articleObject,
   });
+
+  const grid = await App.Trace(countX, countY);
+  console.log(grid);
+  for (let y = 0, i = 0; y < countY; y++) {
+    for (let x = 0; x < countX; x++, i++) {
+      App.SetGridElementXY(x, y, grid[i]);
+    }
+  }
 };
