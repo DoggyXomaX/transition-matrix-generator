@@ -1,3 +1,12 @@
+App.OnCountXChanged = (e) => {
+  const reg = /\d*/g.exec(e.target.value);
+  App.SetCountX(reg[0] ? +reg[0] * 0.01 : undefined);
+};
+App.OnCountYChanged = (e) => {
+  const reg = /\d*/g.exec(e.target.value);
+  App.SetCountY(reg[0] ? +reg[0] * 0.01 : undefined);
+};
+
 App.OnScaleWheel = (e) => (e.deltaY > 0 ? App.OnScaleDown : App.OnScaleUp)();
 App.OnScaleChanged = (e) => {
   const reg = /[0-9\.]*/g.exec(e.target.value);
@@ -6,6 +15,7 @@ App.OnScaleChanged = (e) => {
 App.OnScaleUp = () => App.SetScale(App.settings.scale / App.settings.scaleStep);
 App.OnScaleDown = () => App.SetScale(App.settings.scale * App.settings.scaleStep);
 App.OnScaleReset = () => App.SetScale(1);
+
 App.OnMovingDown = (e) => {
   const { mouse } = App.state;
   mouse.start.x = e.screenX;
@@ -35,4 +45,5 @@ App.OnMovingUp = () => {
   );
 };
 App.OnMovingReset = () => App.SetOffset(0, 0);
+
 App.OnGenerate = () => App.Generate();
