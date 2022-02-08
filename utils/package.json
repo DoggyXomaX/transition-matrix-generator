@@ -4,7 +4,9 @@
   "description": "Meow",
   "main": "concat.js",
   "scripts": {
-    "start": "node concat.js"
+    "start": "node concat.js",
+    "build": "node concat.js",
+    "minify": "node concat.js minify"
   },
   "repository": {
     "type": "git",
